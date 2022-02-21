@@ -1,36 +1,42 @@
-import React, { useEffect, useState, useRef } from "react";
+import React from 'react';
 
 type TText = {
-  id:number,
-  type:string,
-  value:string
-}
+  id: number;
+  type: string;
+  value: string;
+};
 
-interface IText{
-  t:TText
-  setEl:(p:string)=>void,
-  setText:(p:any)=>void,
-  select:any
+interface IText {
+  item: TText;
+  setEl: (p: string) => void;
+  setText: (p: any) => void;
+  setSelect: (p: any) => void;
+  select: any;
 }
 
 const Text: React.FC<IText> = (props) => {
+  const { setEl, setText, item, setSelect, select } = props;
 
-  const { setEl,setText,t,select } = props
-
+  const handleClick = (e:React.MouseEvent<HTMLDivElement, MouseEvent>) => {
+    e.stopPropagation();
+    setEl('text');
+    setText(item.value);
+    setSelect(item);
+  }
 
   return (
     <div
-      key={t.id}
-      onClick={(e) => {
-        setEl("text");
-        setText((e.target as HTMLDivElement).textContent);
-        select.current = t;
-        console.log("text");
+      draggable
+      key={item.id}
+      style={select.id == item.id ? { border: 'dashed' } : {}}
+      onDragStart={() => {
+        setSelect(item);
       }}
+      onClick={handleClick}
+      dangerouslySetInnerHTML={{__html:item.value}}
     >
-      {t.value}
     </div>
   );
 };
 
-export default Text
+export default Text;

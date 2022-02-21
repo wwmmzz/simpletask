@@ -1,81 +1,79 @@
-import React, { useState,useRef } from "react";
-import { Layout, Button, Row, Col } from "antd";
-import { Editor } from "@tinymce/tinymce-react";
-import DragPlace from "./DragPlace";
-import { TText, TImg } from "./type";
+import { Button, Layout } from "antd";
+import React, { useEffect } from "react";
+import { connect } from "dva";
+import { Dispatch } from "redux";
+import DragPlace from "./DragPlace/index";
+import Edit from "./Edit/index";
+import { IApp, TEl } from "./type";
+import Origin from "./Origin";
+import styled from "styled-components";
 
+const { Sider } = Layout;
 
-const { Sider, Content, Header, Footer } = Layout;
+const StyledSider = styled(Sider)`
+  overflow: auto;
+  padding-top: 10;
+  height: 100vh;
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  background: #e3e3e3;
+`;
 
-const App: React.FC = (props) => {
-  const save = localStorage.getItem("save");
+const LeftSider = styled(StyledSider)`
+  left: 0;
+  text-align: center;
+`;
 
-  const [contentEl, setContentEl] = useState<Array<TText | TImg>>(
-    (save && JSON.parse(save)) || []
-  );
+const RightSider = styled(StyledSider)`
+  right: 0;
+`;
 
-  let dragEl = useRef<TText | TImg>();
+interface App {
+  dispatch: Dispatch<any>;
+}
 
+const App: React.FC<App & IApp> = (props) => {
+  const { dispatch, contentEl } = props;
+
+  useEffect(() => {
+    const save = localStorage.getItem("save");
+
+    updateContent((save && JSON.parse(save)) || []);
+  }, []);
+
+  const updateContent = (content: Array<TEl>) => {
+    dispatch({
+      type: "app/update",
+      payload: {
+        contentEl: content,
+      },
+    });
+  };
+
+  const updateDragEl = (value: TEl) => {
+    dispatch({
+      type: "app/update",
+      payload: {
+        dragEl: value,
+      },
+    });
+  };
 
   return (
     <Layout>
-      <Sider>
-        <div>
-          <Button
-           draggable
-           onDragStart={() => {
-             dragEl.current = {
-               id: contentEl.length,
-               type: "txt",
-               value: "请输入文字",
-             };
-           }}
-          >文字</Button>
-        </div>
-        <div>
-          <Button
-           draggable
-           onDragStart={() => {
-             dragEl.current = {
-               id: contentEl.length,
-               type: "img",
-               imgSrc: "1.jpg",
-             };
-           }}
-          >图片</Button>
-        </div>
-      </Sider>
-      <DragPlace 
-      save={save}
-      contentEl={contentEl}
-      dragEl={dragEl}
-      setContentEl={setContentEl}
-      />
-      <Sider>
-        <Button>基本属性</Button>
-        <Editor
-          // onInit={(evt, editor) => (editorRef.current = editor)}
-          initialValue="<p>This is the initial content of the editor.</p>"
-          init={{
-            height: 500,
-            menubar: false,
-            plugins: [
-              "advlist autolink lists link image charmap print preview anchor",
-              "searchreplace visualblocks code fullscreen",
-              "insertdatetime media table paste code help wordcount",
-            ],
-            toolbar:
-              "undo redo | formatselect | " +
-              "bold italic backcolor | alignleft aligncenter " +
-              "alignright alignjustify | bullist numlist outdent indent | " +
-              "removeformat | help",
-            content_style:
-              "body { font-family:Helvetica,Arial,sans-serif; font-size:14px }",
-          }}
-        />
-      </Sider>
+      <LeftSider>
+        <Origin contentEl={contentEl} updateDragEl={updateDragEl} />
+      </LeftSider>
+      <DragPlace />
+      <RightSider width={400}>
+        <Button type="primary">基本属性</Button>
+        <Edit />
+      </RightSider>
     </Layout>
   );
 };
 
-export default App;
+export default connect(({ app }: { app: IApp }) => ({
+  ...app,
+}))(App);
